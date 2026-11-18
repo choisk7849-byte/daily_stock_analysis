@@ -36,7 +36,10 @@ jobs:
     environment: STOCK_LIST
     # 添加超时限制，防止任务卡死
     timeout-minutes: ${{ fromJSON(vars.ANALYSIS_TIMEOUT_MINUTES || '30') }}
-    
+    # 한국 시간 기준 날짜로 리포트 날짜와 거래일 판단을 맞춘다 (러너 기본값은 UTC)
+    env:
+      TZ: Asia/Seoul
+
     steps:
       - name: 随机延迟（避免固定时间访问）
         run: sleep $((RANDOM % 60))  # 随机延迟0-60秒启动
