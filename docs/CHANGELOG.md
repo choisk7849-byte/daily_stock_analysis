@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- 新条目格式：- [类型] 描述（类型取值：新功能/改进/修复/文档/测试/chore）-->
 
+- [新功能] 每日分析工作流新增韩语多区域要闻简报步骤（`scripts/daily_news_brief.py`，复用 Tavily / Gemini / Telegram 现有密钥，失败不影响主分析）
+
 ## [3.35.0] - 2026-11-16
 
 ### 发布亮点
