@@ -1891,6 +1891,39 @@ class NotificationService(
 
         return content
 
+    def _brief_price_levels_line(self, result: AnalysisResult, labels: Dict[str, str]) -> str:
+        """Build the per-stock price line (current price, entry, target, stop) for brief reports.
+
+        Returns an empty string when none of the values are available, so the
+        brief layout is unchanged for results without price levels.
+        """
+        dashboard = result.dashboard if isinstance(result.dashboard, dict) else {}
+        battle_plan = dashboard.get('battle_plan')
+        sniper = battle_plan.get('sniper_points') if isinstance(battle_plan, dict) else None
+        sniper = sniper if isinstance(sniper, dict) else {}
+
+        price = getattr(result, 'current_price', None)
+        if price in (None, '', 'N/A'):
+            perspective = dashboard.get('data_perspective')
+            position = perspective.get('price_position') if isinstance(perspective, dict) else None
+            price = position.get('current_price') if isinstance(position, dict) else None
+
+        parts: List[str] = []
+        if price not in (None, '', 'N/A'):
+            if isinstance(price, (int, float)):
+                price = f"{price:,.0f}" if abs(price) >= 100 else f"{price:,.2f}"
+            parts.append(f"💰 {labels['current_price_label']} {price}")
+        for key, emoji, label_key in (
+            ('ideal_buy', '🎯', 'ideal_buy_label'),
+            ('take_profit', '🎊', 'take_profit_label'),
+            ('stop_loss', '🛑', 'stop_loss_label'),
+        ):
+            value = sniper.get(key)
+            if value in (None, '', 'N/A'):
+                continue
+            parts.append(f"{emoji} {labels[label_key]} {self._clean_sniper_value(value)[:20]}")
+        return " | ".join(parts)
+
     def generate_brief_report(
         self,
         results: List[AnalysisResult],
@@ -1944,6 +1977,9 @@ class NotificationService(
                 f"{signal_text} | "
                 f"{labels['score_label']} {r.sentiment_score} | {one}"
             )
+            levels_line = self._brief_price_levels_line(r, labels)
+            if levels_line:
+                lines.append(levels_line)
             news_disclosure = self._empty_news_disclosure(r, report_language)
             if news_disclosure:
                 lines.append(news_disclosure)

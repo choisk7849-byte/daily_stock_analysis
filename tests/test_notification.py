@@ -851,6 +851,38 @@ class TestNotificationServiceReportGeneration(unittest.TestCase):
         self.assertIn("🟢1 🟡0 🔴0", out)
         self.assertIn("Buy | Score 72", out)
         self.assertNotIn("Hold | Score 72", out)
+        self.assertNotIn("💰", out)
+
+    @mock.patch("src.notification.get_config")
+    def test_brief_report_shows_price_levels_when_available(self, mock_get_config: mock.MagicMock):
+        mock_get_config.return_value = _make_config(report_renderer_enabled=False)
+        service = NotificationService()
+        result = AnalysisResult(
+            code="005930.KS",
+            name="삼성전자",
+            sentiment_score=60,
+            trend_prediction="횡보",
+            operation_advice="관망",
+            decision_type="hold",
+            report_language="ko",
+            current_price=72000.0,
+            dashboard={
+                "battle_plan": {
+                    "sniper_points": {
+                        "ideal_buy": "70,000원",
+                        "take_profit": "78,000원",
+                        "stop_loss": "N/A",
+                    }
+                }
+            },
+        )
+
+        out = service.generate_brief_report([result], report_date="2026-11-26")
+
+        self.assertIn("💰 현재가 72,000", out)
+        self.assertIn("🎯 이상적 매수가 70,000원", out)
+        self.assertIn("🎊 목표가 78,000원", out)
+        self.assertNotIn("손절가", out)
 
     @mock.patch("src.notification.get_config")
     def test_generate_aggregate_report_routes_by_report_type(self, mock_get_config: mock.MagicMock):
